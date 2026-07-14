@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS `global_voices` (
     `qwen_voice_id` VARCHAR(64) DEFAULT NULL COMMENT 'qwen-tts生成的音色ID',
     `voice_type` VARCHAR(32) NOT NULL DEFAULT 'custom' COMMENT 'qwen-designed | custom',
     `custom_voice_url` VARCHAR(512) DEFAULT NULL COMMENT '上传的音频URL（预览）',
+    `custom_voice_media_id` VARCHAR(64) DEFAULT NULL COMMENT '上传音频媒体ID',
     `voice_prompt` TEXT DEFAULT NULL COMMENT 'AI设计时的提示词',
     `gender` VARCHAR(16) DEFAULT NULL COMMENT 'male | female | neutral',
     `language` VARCHAR(16) NOT NULL DEFAULT 'zh' COMMENT '语言',

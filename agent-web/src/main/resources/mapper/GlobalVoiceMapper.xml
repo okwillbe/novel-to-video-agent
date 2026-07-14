@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.novel2video.agent.mapper.GlobalVoiceMapper">
+
+    <resultMap id="VoiceResultMap" type="io.novel2video.agent.entity.GlobalVoice">
+        <id property="id" column="id"/>
+        <result property="voiceId" column="voice_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="folderId" column="folder_id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="gender" column="gender"/>
+        <result property="language" column="language"/>
+        <result property="voiceType" column="voice_type"/>
+        <result property="qwenVoiceId" column="qwen_voice_id"/>
+        <result property="customVoiceUrl" column="custom_voice_url"/>
+        <result property="customVoiceMediaId" column="custom_voice_media_id"/>
+        <result property="voicePrompt" column="voice_prompt"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="VoiceResultMap">
+        SELECT * FROM global_voices
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByUserIdAndFolderId" resultMap="VoiceResultMap">
+        SELECT * FROM global_voices
+        WHERE user_id = #{userId} AND folder_id = #{folderId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findUnclassified" resultMap="VoiceResultMap">
+        SELECT * FROM global_voices
+        WHERE user_id = #{userId} AND folder_id IS NULL
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByVoiceId" resultMap="VoiceResultMap">
+        SELECT * FROM global_voices
+        WHERE voice_id = #{voiceId}
+    </select>
+
+    <insert id="insert" parameterType="io.novel2video.agent.entity.GlobalVoice">
+        INSERT INTO global_voices (
+            voice_id, user_id, folder_id, name, description,
+            gender, language, voice_type, qwen_voice_id,
+            custom_voice_url, custom_voice_media_id, voice_prompt,
+            created_at, updated_at
+        ) VALUES (
+            #{voiceId}, #{userId}, #{folderId}, #{name}, #{description},
+            #{gender}, #{language}, #{voiceType}, #{qwenVoiceId},
+            #{customVoiceUrl}, #{customVoiceMediaId}, #{voicePrompt},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="io.novel2video.agent.entity.GlobalVoice">
+        UPDATE global_voices SET
+            name = #{name},
+            description = #{description},
+            folder_id = #{folderId},
+            qwen_voice_id = #{qwenVoiceId},
+            voice_type = #{voiceType},
+            custom_voice_url = #{customVoiceUrl},
+            gender = #{gender},
+            language = #{language},
+            updated_at = NOW()
+        WHERE voice_id = #{voiceId}
+    </update>
+
+    <delete id="deleteByVoiceId">
+        DELETE FROM global_voices
+        WHERE voice_id = #{voiceId} AND user_id = #{userId}
+    </delete>
+
+    <select id="existsByQwenVoiceIdAndNotVoiceId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM global_voices
+        WHERE qwen_voice_id = #{qwenVoiceId}
+          AND voice_id != #{excludeVoiceId}
+          AND user_id = #{userId}
+    </select>
+
+    <update id="detachFromFolder">
+        UPDATE global_voices
+        SET folder_id = NULL, updated_at = NOW()
+        WHERE folder_id = #{folderId}
+    </update>
+
+</mapper>
