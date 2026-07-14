@@ -54,6 +54,9 @@ function formatQuota(seconds: number | null, type: 'video' | 'voice'): string {
           <router-link to="/tasks" class="nav-link">
             任务列表
           </router-link>
+          <router-link to="/assets" class="nav-link">
+            资产管理
+          </router-link>
           <router-link to="/skills" class="nav-link">
             技能库
           </router-link>
