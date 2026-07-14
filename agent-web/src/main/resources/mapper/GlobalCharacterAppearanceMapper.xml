@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.novel2video.agent.mapper.GlobalCharacterAppearanceMapper">
+
+    <resultMap id="AppearanceResultMap" type="io.novel2video.agent.entity.GlobalCharacterAppearance">
+        <id property="id" column="id"/>
+        <result property="appearanceId" column="appearance_id"/>
+        <result property="characterId" column="character_id"/>
+        <result property="appearanceIndex" column="appearance_index"/>
+        <result property="changeReason" column="change_reason"/>
+        <result property="artStyle" column="art_style"/>
+        <result property="description" column="description"/>
+        <result property="descriptions" column="descriptions"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="descriptionSource" column="description_source"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="imageMediaId" column="image_media_id"/>
+        <result property="imageUrls" column="image_urls"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="selectedIndex" column="selected_index"/>
+        <result property="previousImageUrl" column="previous_image_url"/>
+        <result property="previousImageMediaId" column="previous_image_media_id"/>
+        <result property="previousImageUrls" column="previous_image_urls"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="previousDescriptions" column="previous_descriptions"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByCharacterId" resultMap="AppearanceResultMap">
+        SELECT * FROM global_character_appearances
+        WHERE character_id = #{characterId}
+        ORDER BY appearance_index ASC
+    </select>
+
+    <select id="findByCharacterIdAndIndex" resultMap="AppearanceResultMap">
+        SELECT * FROM global_character_appearances
+        WHERE character_id = #{characterId} AND appearance_index = #{appearanceIndex}
+    </select>
+
+    <select id="selectByAppearanceId" resultMap="AppearanceResultMap">
+        SELECT * FROM global_character_appearances
+        WHERE appearance_id = #{appearanceId}
+    </select>
+
+    <select id="getMaxAppearanceIndex" resultType="java.lang.Integer">
+        SELECT MAX(appearance_index) FROM global_character_appearances
+        WHERE character_id = #{characterId}
+    </select>
+
+    <insert id="insert" parameterType="io.novel2video.agent.entity.GlobalCharacterAppearance">
+        INSERT INTO global_character_appearances (
+            appearance_id, character_id, appearance_index, change_reason,
+            art_style, description, descriptions, description_source,
+            image_url, image_media_id, image_urls, selected_index,
+            previous_image_url, previous_image_media_id, previous_image_urls, previous_descriptions,
+            created_at, updated_at
+        ) VALUES (
+            #{appearanceId}, #{characterId}, #{appearanceIndex}, #{changeReason},
+            #{artStyle}, #{description},
+            #{descriptions, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            #{descriptionSource},
+            #{imageUrl}, #{imageMediaId},
+            #{imageUrls, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            #{selectedIndex},
+            #{previousImageUrl}, #{previousImageMediaId},
+            #{previousImageUrls, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            #{previousDescriptions, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="io.novel2video.agent.entity.GlobalCharacterAppearance">
+        UPDATE global_character_appearances SET
+            change_reason = #{changeReason},
+            art_style = #{artStyle},
+            description = #{description},
+            descriptions = #{descriptions, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            description_source = #{descriptionSource},
+            image_url = #{imageUrl},
+            image_media_id = #{imageMediaId},
+            image_urls = #{imageUrls, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            selected_index = #{selectedIndex},
+            updated_at = NOW()
+        WHERE appearance_id = #{appearanceId}
+    </update>
+
+    <delete id="deleteByAppearanceId">
+        DELETE FROM global_character_appearances
+        WHERE appearance_id = #{appearanceId}
+    </delete>
+
+    <delete id="deleteByCharacterId">
+        DELETE FROM global_character_appearances
+        WHERE character_id = #{characterId}
+    </delete>
+
+    <update id="updateSelectedIndex">
+        UPDATE global_character_appearances
+        SET selected_index = #{selectedIndex}, updated_at = NOW()
+        WHERE appearance_id = #{appearanceId}
+    </update>
+
+    <update id="updateImageUrls">
+        UPDATE global_character_appearances
+        SET image_urls = #{imageUrls, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            selected_index = 0,
+            updated_at = NOW()
+        WHERE appearance_id = #{appearanceId}
+    </update>
+
+    <update id="savePreviousState">
+        UPDATE global_character_appearances
+        SET previous_image_url = #{previousImageUrl},
+            previous_image_media_id = #{previousImageMediaId},
+            previous_image_urls = #{previousImageUrls, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            previous_descriptions = #{previousDescriptions, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            updated_at = NOW()
+        WHERE appearance_id = #{appearanceId}
+    </update>
+
+    <update id="restoreFromPreviousState">
+        UPDATE global_character_appearances
+        SET image_url = previous_image_url,
+            image_media_id = previous_image_media_id,
+            image_urls = previous_image_urls,
+            descriptions = previous_descriptions,
+            previous_image_url = NULL,
+            previous_image_media_id = NULL,
+            previous_image_urls = NULL,
+            previous_descriptions = NULL,
+            updated_at = NOW()
+        WHERE appearance_id = #{appearanceId}
+    </update>
+
+</mapper>

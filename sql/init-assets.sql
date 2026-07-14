@@ -58,15 +58,23 @@ CREATE TABLE IF NOT EXISTS `global_character_appearances` (
     `appearance_index` INT NOT NULL DEFAULT 0 COMMENT '形象序号',
     `change_reason` VARCHAR(128) DEFAULT NULL COMMENT '形象说明（如"便装"、"战甲"）',
     `art_style` VARCHAR(64) DEFAULT NULL COMMENT '艺术风格',
-    `description` TEXT DEFAULT NULL COMMENT '形象描述',
-    `image_url` VARCHAR(512) DEFAULT NULL COMMENT '单张图URL',
-    `image_urls` JSON DEFAULT NULL COMMENT '多图URL数组',
+    `description` TEXT DEFAULT NULL COMMENT '当前描述词',
+    `descriptions` JSON DEFAULT NULL COMMENT '历史描述词数组',
+    `description_source` VARCHAR(16) DEFAULT NULL COMMENT '描述来源: user/ai',
+    `image_url` VARCHAR(512) DEFAULT NULL COMMENT '当前图片URL',
+    `image_media_id` VARCHAR(64) DEFAULT NULL COMMENT '当前图片媒体ID',
+    `image_urls` JSON DEFAULT NULL COMMENT '候选图片数组',
     `selected_index` INT DEFAULT 0 COMMENT '选中的图片索引',
+    `previous_image_url` VARCHAR(512) DEFAULT NULL COMMENT '撤销用：上一次图片URL',
+    `previous_image_media_id` VARCHAR(64) DEFAULT NULL COMMENT '撤销用：上一次媒体ID',
+    `previous_image_urls` JSON DEFAULT NULL COMMENT '撤销用：上一次候选列表',
+    `previous_descriptions` JSON DEFAULT NULL COMMENT '撤销用：上一次描述列表',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_appearance_id` (`appearance_id`),
-    KEY `idx_character_id` (`character_id`)
+    KEY `idx_character_id` (`character_id`),
+    UNIQUE KEY `uk_character_index` (`character_id`, `appearance_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色形象';
 
 -- =====================================================
