@@ -1,152 +1,81 @@
-# CLAUDE.md - Novel to Video Agent
+# novel-to-video-agent — 可重复的一次通过测试手册（Machine-friendly）
 
-> 此文件记录项目开发思路和 Claude Code 的协作指南
+目标
+- 让 AI/CI 在“干净环境”里按步骤运行并第一次通过后端与前端测试。
 
-## 项目概述
+必备工具与精确版本（强制）
+- JDK 17 (Temurin/OpenJDK) — test: java -version
+- Maven 3.8+ — test: mvn -v
+- Node 18.x — test: node -v
+- npm 9.x 或 pnpm — test: npm -v
+- Docker 24+、docker-compose v2 — test: docker compose version
+- nc (netcat) 用于端口等待
 
-基于 agentscope-java 的智能小说转视频 Agent 系统。
+固定依赖镜像（推荐在 docker-compose.yml 中使用）
+- mysql:8.0.36
+- redis:7.2
+- minio/minio:RELEASE.2024-xx-xx  （请 pin 一个发布版本）
 
-**核心理念**：渐进式开发，先实现核心 Agent 能力，再扩展多用户等功能。
+仓库约定的文件（必须存在）
+- docker-compose.yaml (在仓库根)
+- sql/init-schema.sql
+- sql/init-preset-skills.sql
+- sql/init-providers.sql
+- sql/init-default-user.sql
+- 后端模块：agent-web
+- 前端目录：frontend
 
----
+环境变量 (.env.example)
+- DB_HOST=127.0.0.1
+- DB_PORT=13306          # 本地映射端口
+- DB_NAME=novel2video
+- DB_USER=root
+- DB_PASSWORD=novel2video123
+- REDIS_HOST=127.0.0.1
+- REDIS_PORT=6379
+- MINIO_ENDPOINT=http://127.0.0.1:9000
+- MINIO_ACCESS_KEY=minioadmin
+- MINIO_SECRET_KEY=minioadmin
 
-## 开发策略
+一键脚本（位置）
+- scripts/init-db.sh      # 初始化数据库
+- scripts/run-tests.sh    # 启动依赖并运行所有测试
+- logs/                   # 运行时日志输出目录
+- report/last-failure/    # 失败时保存 diagnostc
 
-### 单用户模式（当前阶段）
+启动依赖（本地/CI）
+- docker compose -f docker-compose.yaml up mysql redis minio -d
+- 在 CI 中，服务映射请使用 jobs.services
 
-- **思路**：先跑通核心功能，用户系统暂时简化
-- **实现**：用户表只有一条默认记录 `user_default`
-- **默认账号**：admin@novel2video.local / admin123
-- **后续扩展**：启用 JWT 认证、OAuth、多用户注册
+数据库初始化（脚本化 - scripts/init-db.sh）
+- mysql -h 127.0.0.1 -P 13306 -u root -pnovel2video123 novel2video < sql/init-schema.sql
+- 依次执行其他 init-*.sql 文件（脚本中实现重试与超时）
 
-### 为什么先单用户？
+运行测试（脚本化 - scripts/run-tests.sh）
+- 等待依赖就绪（nc / http health check，超时 120s）
+- 执行 scripts/init-db.sh
+- 后端测试:
+    - cd agent-web
+    - mvn -T1C -DskipITs=false test  # 或仓库默认的测试命令
+    - 成功判定：退出码 0 且最后 50 行包含 "BUILD SUCCESS"
+- 前端测试（若存在）:
+    - cd frontend
+    - npm ci
+    - npm test
+    - 成功判定：退出码 0 或输出包含 "All tests passed"
 
-1. **聚焦核心**：Agent 的 ReAct 推理、Skills 执行是核心难点
-2. **快速验证**：减少用户系统的复杂度，快速验证业务逻辑
-3. **预留扩展**：数据库表结构已设计完整，后续加功能成本低
+成功判定（agent/CI 用）
+- 所有步骤退出码为 0
+- 文件 logs/backend-test.log 和 logs/frontend-test.log 已生成且包含相应“success”关键字
+- 脚本结束时打印 EXACT: TESTS PASSED: all modules
 
----
+错误处理与报告
+- 若失败：在 report/last-failure/ 写入 build.log、failing-tests.txt、docker-logs.txt、reproduction-commands.txt
+- agent 必须抓取第一条堆栈、失败的 test 名称，并按 JSON 格式输出到控制台以便自动解析
 
-## 技术架构
-
-```
-用户请求 → OrchestratorAgent → MySQL Skills库 → 执行步骤 → 返回结果
-    ↓
-  Redis Streams (任务队列)
-    ↓
-  Worker (调用外部AI API)
-```
-
-### 核心组件
-
-| 组件 | 作用 | 状态 |
-|------|------|------|
-| OrchestratorAgent | ReAct 决策引擎 | ✅ 骨架完成 |
-| SkillService | MySQL Skills CRUD | ✅ 完成 |
-| TaskService | 任务生命周期管理 | ✅ 完成 |
-| TaskQueueService | Redis Streams 队列 | ✅ 骨架完成 |
-| UserService | 用户管理（单用户） | ✅ 完成 |
-| AI Provider | 调用外部AI服务 | ⏳ 待实现 |
-
----
-
-## 分阶段实现
-
-### Phase 1: 基础功能（当前）
-
-**目标**：实现一个完整的最小可用流程
-
-- [x] Maven 项目骨架
-- [x] 数据库表结构和初始化
-- [x] Entity/Mapper/Service 基础代码
-- [x] REST API 控制器
-- [x] Vue 前端骨架
-- [ ] **Worker 执行逻辑** - 真正执行 Skills
-- [ ] **AI Provider 集成** - 调用 Google Gemini / FAL 等
-- [ ] **进度推送** - WebSocket 或 SSE
-- [ ] **MinIO 文件存储** - 上传下载文件
-
-### Phase 2: 核心能力
-
-- [ ] 章节分析（小说文本处理）
-- [ ] 角色提取和一致性图片生成
-- [ ] 分镜脚本生成
-- [ ] 视频合成（调用 Kling 等）
-
-### Phase 3: 用户系统扩展
-
-- [ ] JWT 认证
-- [ ] 多用户注册/登录
-- [ ] 配额管理完善
-- [ ] 计费系统（SHADOW 模式）
-
----
-
-## 代码规范
-
-### Java
-
-- 使用 Lombok 简化代码
-- Service 层负责业务逻辑，Controller 只做参数转换
-- 配置类放在 `config` 包
-- 异常使用 RuntimeException（后续可改进）
-
-### Vue
-
-- 使用 `<script setup>` 语法
-- API 调用集中在 `api/index.ts`
-- 使用 Element Plus 组件
-- Tailwind CSS 使用 `tw-` 前缀
-
----
-
-## 环境变量
-
-```bash
-# 数据库
-DB_HOST=mysql
-DB_PORT=3306
-DB_NAME=novel2video
-DB_USER=root
-DB_PASSWORD=novel2video123
-
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-
-# MinIO
-MINIO_ENDPOINT=http://minio:9000
-MINIO_BUCKET=novel2video
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-
-# AI Provider Keys（设置页面配置）
-GOOGLE_API_KEY=xxx
-FAL_API_KEY=xxx
-```
-
----
-
-## 启动命令
-
-```bash
-# Docker 启动基础设施
-docker compose up mysql redis minio -d
-
-# 初始化数据库
-mysql -h 127.0.0.1 -P 13306 -u root -pnovel2video123 novel2video < sql/init-schema.sql
-mysql -h 127.0.0.1 -P 13306 -u root -pnovel2video123 novel2video < sql/init-preset-skills.sql
-mysql -h 127.0.0.1 -P 13306 -u root -pnovel2video123 novel2video < sql/init-providers.sql
-mysql -h 127.0.0.1 -P 13306 -u root -pnovel2video123 novel2video < sql/init-default-user.sql
-
-# 启动后端
-mvn spring-boot:run -pl agent-web
-
-# 启动前端
-cd frontend && npm run dev
-```
-
----
+注意事项
+- 请在 docker-compose.yaml 中 pin 依赖镜像版本
+- 在 CI 与本地一致的镜像/版本下验证一次
 
 ## 参考项目
 
