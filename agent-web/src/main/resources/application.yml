@@ -1,0 +1,86 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: novel-to-video-agent
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:novel2video}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf8
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:novel2video123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: io.novel2video.agent.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+# AI Providers - 国产优先
+ai:
+  providers:
+    # ===== 国产 LLM =====
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:}
+    moonshot:
+      api-key: ${MOONSHOT_API_KEY:}
+    doubao:
+      api-key: ${DOUBAO_API_KEY:}
+      endpoint-id: ${DOUBAO_ENDPOINT_ID:}
+    qwen:
+      api-key: ${QWEN_API_KEY:}
+
+    # ===== 国产图片/视频 =====
+    kling:
+      access-key: ${KLING_ACCESS_KEY:}
+      secret-key: ${KLING_SECRET_KEY:}
+    liblib:
+      api-key: ${LIBLIB_API_KEY:}
+
+    # ===== 国产语音 =====
+    fish-speech:
+      api-key: ${FISH_SPEECH_API_KEY:}
+
+    # ===== 国外服务商（备选）=====
+    google:
+      api-key: ${GOOGLE_API_KEY:}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+    fal:
+      api-key: ${FAL_API_KEY:}
+
+storage:
+  type: minio
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+    bucket: ${MINIO_BUCKET:novel2video}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+
+task:
+  worker:
+    enabled: true
+  queue:
+    stream-key: "novel2video:tasks"
+    consumer-group: "workers"
+
+billing:
+  mode: ${BILLING_MODE:OFF}
+
+logging:
+  level:
+    io.novel2video: DEBUG
