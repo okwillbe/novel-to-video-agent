@@ -134,42 +134,6 @@ public class AssetController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    // ==================== 角色形象操作 ====================
-
-    @Operation(summary = "列出角色形象")
-    @GetMapping("/characters/{characterId}/appearances")
-    public ResponseEntity<ApiResponse<List<AppearanceResponse>>> listAppearances(@PathVariable String characterId) {
-        List<GlobalCharacterAppearance> appearances = assetService.listAppearances(characterId);
-        List<AppearanceResponse> response = appearances.stream()
-                .map(this::toAppearanceResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "添加角色形象")
-    @PostMapping("/characters/{characterId}/appearances")
-    public ResponseEntity<ApiResponse<AppearanceResponse>> createAppearance(
-            @PathVariable String characterId,
-            @RequestBody CreateAppearanceRequest request) {
-        GlobalCharacterAppearance appearance = new GlobalCharacterAppearance()
-                .setCharacterId(characterId)
-                .setAppearanceIndex(request.getAppearanceIndex() != null ? request.getAppearanceIndex() : 0)
-                .setChangeReason(request.getChangeReason())
-                .setArtStyle(request.getArtStyle())
-                .setDescription(request.getDescription())
-                .setImageUrl(request.getImageUrl())
-                .setImageUrls(request.getImageUrls())
-                .setSelectedIndex(request.getSelectedIndex() != null ? request.getSelectedIndex() : 0);
-        appearance = assetService.createAppearance(appearance);
-        return ResponseEntity.ok(ApiResponse.success(toAppearanceResponse(appearance)));
-    }
-
-    @Operation(summary = "删除角色形象")
-    @DeleteMapping("/appearances/{appearanceId}")
-    public ResponseEntity<ApiResponse<Void>> deleteAppearance(@PathVariable String appearanceId) {
-        assetService.deleteAppearance(appearanceId);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
 
     // ==================== 场景操作 ====================
 
@@ -266,74 +230,6 @@ public class AssetController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    // ==================== 音色操作 ====================
-
-    @Operation(summary = "列出音色")
-    @GetMapping("/voices")
-    public ResponseEntity<ApiResponse<List<VoiceResponse>>> listVoices(
-            @RequestParam(required = false) String folderId) {
-        String userId = getDefaultUserId();
-        List<GlobalVoice> voices = assetService.listVoices(userId, folderId);
-        List<VoiceResponse> response = voices.stream()
-                .map(this::toVoiceResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "获取音色详情")
-    @GetMapping("/voices/{voiceId}")
-    public ResponseEntity<ApiResponse<VoiceResponse>> getVoice(@PathVariable String voiceId) {
-        GlobalVoice voice = assetService.getVoice(voiceId)
-                .orElseThrow(() -> new RuntimeException("Voice not found: " + voiceId));
-        return ResponseEntity.ok(ApiResponse.success(toVoiceResponse(voice)));
-    }
-
-    @Operation(summary = "创建音色")
-    @PostMapping("/voices")
-    public ResponseEntity<ApiResponse<VoiceResponse>> createVoice(@RequestBody CreateVoiceRequest request) {
-        String userId = getDefaultUserId();
-        GlobalVoice voice = new GlobalVoice()
-                .setUserId(userId)
-                .setFolderId(request.getFolderId())
-                .setName(request.getName())
-                .setDescription(request.getDescription())
-                .setQwenVoiceId(request.getQwenVoiceId())
-                .setVoiceType(request.getVoiceType() != null ? request.getVoiceType() : "custom")
-                .setCustomVoiceUrl(request.getCustomVoiceUrl())
-                .setVoicePrompt(request.getVoicePrompt())
-                .setGender(request.getGender())
-                .setLanguage(request.getLanguage() != null ? request.getLanguage() : "zh");
-        voice = assetService.createVoice(voice);
-        return ResponseEntity.ok(ApiResponse.success(toVoiceResponse(voice)));
-    }
-
-    @Operation(summary = "更新音色")
-    @PutMapping("/voices/{voiceId}")
-    public ResponseEntity<ApiResponse<VoiceResponse>> updateVoice(
-            @PathVariable String voiceId,
-            @RequestBody UpdateVoiceRequest request) {
-        GlobalVoice voice = assetService.getVoice(voiceId)
-                .orElseThrow(() -> new RuntimeException("Voice not found: " + voiceId));
-        voice.setFolderId(request.getFolderId())
-                .setName(request.getName())
-                .setDescription(request.getDescription())
-                .setQwenVoiceId(request.getQwenVoiceId())
-                .setVoiceType(request.getVoiceType())
-                .setCustomVoiceUrl(request.getCustomVoiceUrl())
-                .setVoicePrompt(request.getVoicePrompt())
-                .setGender(request.getGender())
-                .setLanguage(request.getLanguage());
-        voice = assetService.updateVoice(voice);
-        return ResponseEntity.ok(ApiResponse.success(toVoiceResponse(voice)));
-    }
-
-    @Operation(summary = "删除音色")
-    @DeleteMapping("/voices/{voiceId}")
-    public ResponseEntity<ApiResponse<Void>> deleteVoice(@PathVariable String voiceId) {
-        String userId = getDefaultUserId();
-        assetService.deleteVoice(voiceId, userId);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
 
     // ==================== 转换方法 ====================
 

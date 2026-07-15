@@ -48,6 +48,11 @@ public class GlobalLocation {
     private String artStyle;
 
     /**
+     * 场景图片（兼容旧代码）
+     */
+    private String imageUrl;
+
+    /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)

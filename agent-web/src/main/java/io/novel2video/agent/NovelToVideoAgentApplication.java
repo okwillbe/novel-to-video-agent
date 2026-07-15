@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * An intelligent agent system that transforms novels into videos
  * using agentscope-java ReActAgent with MySQL-based Skills repository.
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "io.novel2video.agent")
 @EnableAsync
 @EnableScheduling
 @MapperScan("io.novel2video.agent.mapper")

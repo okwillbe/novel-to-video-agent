@@ -4,6 +4,7 @@ import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * MinIO Storage Configuration
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * Mirrors waoowaoo's MinIO storage setup.
  */
 @Configuration
+@ConditionalOnProperty(name = "storage.type", havingValue = "minio")
 public class MinioConfig {
 
     @Value("${storage.minio.endpoint:http://minio:9000}")

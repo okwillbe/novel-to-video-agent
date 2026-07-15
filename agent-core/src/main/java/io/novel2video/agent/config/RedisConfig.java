@@ -34,6 +34,7 @@ public class RedisConfig {
         poolConfig.setMinIdle(5);
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
+        poolConfig.setJmxEnabled(false);
 
         if (password != null && !password.isEmpty()) {
             return new JedisPool(poolConfig, host, port, 2000, password);

@@ -22,7 +22,7 @@ import java.util.Map;
  * 从 Redis Streams 消费任务并执行
  */
 @Slf4j
-@Component
+@Component("agentTaskExecutor")
 @RequiredArgsConstructor
 public class TaskExecutor {
 
@@ -45,7 +45,7 @@ public class TaskExecutor {
                 for (StreamEntry entry : entries) {
                     try {
                         processTask(entry);
-                        queueService.acknowledgeTask(entry.getID());
+                        queueService.acknowledgeTask(entry.getID().toString());
                     } catch (Exception e) {
                         log.error("Failed to process task entry: {}", entry.getID(), e);
                         // 任务失败不确认，让其他 worker 接管
@@ -110,8 +110,8 @@ public class TaskExecutor {
 
         try {
             // 使用 SkillExecutor 执行
-            Map<String, Object> input = step.getInputData() != null ?
-                    (Map<String, Object>) step.getInputData() : Map.of();
+            Map<String, Object> input = step.getInputData() != null ? (Map<String, Object>) step.getInputData()
+                    : Map.of();
 
             Object result = skillExecutor.execute(step.getSkillId(), input);
 
@@ -131,7 +131,8 @@ public class TaskExecutor {
     }
 
     private int calculateProgress(Task task, TaskStep currentStep) {
-        if (task.getTotalSteps() == null || task.getTotalSteps() == 0) return 0;
+        if (task.getTotalSteps() == null || task.getTotalSteps() == 0)
+            return 0;
 
         int completedSteps = task.getCompletedSteps() != null ? task.getCompletedSteps() : 0;
         int stepProgress = currentStep.getProgress() != null ? currentStep.getProgress() : 0;

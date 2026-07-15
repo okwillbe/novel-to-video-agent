@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -27,8 +28,8 @@ import java.util.Optional;
 public class UserService {
 
     public static final String DEFAULT_USER_ID = "user_default";
-    public static final String DEFAULT_EMAIL = "admin@novel2video.local";
-    public static final String DEFAULT_PASSWORD = "admin123"; // 明文，后续改加密
+    public static final String DEFAULT_EMAIL = "admin";
+    public static final String DEFAULT_PASSWORD = "admin"; // 明文，后续改加密
 
     private final UserMapper userMapper;
 

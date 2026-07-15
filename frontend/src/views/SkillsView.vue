@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getSkills, type SkillResponse } from '@/api/task'
+import { getSkills, type SkillResponse } from '@/api'
 
 const skills = ref<SkillResponse[]>([])
 const categories = ref<string[]>(['全部', 'analysis', 'generation', 'synthesis', 'postprocess'])

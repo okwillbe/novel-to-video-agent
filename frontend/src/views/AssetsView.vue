@@ -4,7 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   FolderOpened,
   User,
-  Location,
+  Location as LocationIcon,
   Microphone,
   Plus,
   Edit,
@@ -18,6 +18,7 @@ import {
   getLocations, getLocation, createLocation, updateLocation, deleteLocation,
   createLocationImage, deleteLocationImage,
   getVoices, getVoice, createVoice, updateVoice, deleteVoice,
+  aiDesignCharacter, aiDesignLocation,
   type Folder, type Character, type Appearance, type Location, type LocationImage, type Voice,
 } from '@/api/assets'
 
@@ -41,7 +42,12 @@ const characterForm = ref({
   name: '',
   folderId: null as string | null,
   aliases: [] as string[],
+  profileData: {},
   profileConfirmed: false,
+  voiceId: '',
+  voiceType: '',
+  customVoiceUrl: '',
+  globalVoiceId: '',
 })
 
 // 场景
@@ -63,9 +69,53 @@ const voiceForm = ref({
   name: '',
   folderId: null as string | null,
   description: '',
+  qwenVoiceId: '',
+  voiceType: 'custom',
+  customVoiceUrl: '',
+  voicePrompt: '',
   gender: '',
   language: 'zh',
 })
+
+const showAiDesignCharacterDialog = ref(false)
+const aiDesignCharacterPrompt = ref('')
+async function doAiDesignCharacter() {
+  if (!aiDesignCharacterPrompt.value.trim()) return
+  try {
+    loading.value = true
+    await aiDesignCharacter({
+      folderId: selectedFolderId.value || undefined,
+      prompt: aiDesignCharacterPrompt.value,
+    })
+    ElMessage.success('AI 生成角色成功')
+    showAiDesignCharacterDialog.value = false
+    await loadAllAssets()
+  } catch (e: any) {
+    ElMessage.error(e.message || '生成失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const showAiDesignLocationDialog = ref(false)
+const aiDesignLocationPrompt = ref('')
+async function doAiDesignLocation() {
+  if (!aiDesignLocationPrompt.value.trim()) return
+  try {
+    loading.value = true
+    await aiDesignLocation({
+      folderId: selectedFolderId.value || undefined,
+      prompt: aiDesignLocationPrompt.value,
+    })
+    ElMessage.success('AI 生成场景成功')
+    showAiDesignLocationDialog.value = false
+    await loadAllAssets()
+  } catch (e: any) {
+    ElMessage.error(e.message || '生成失败')
+  } finally {
+    loading.value = false
+  }
+}
 
 // ==================== 初始化 ====================
 
@@ -161,7 +211,12 @@ function openCreateCharacterDialog() {
     name: '',
     folderId: selectedFolderId.value,
     aliases: [],
+    profileData: {},
     profileConfirmed: false,
+    voiceId: '',
+    voiceType: '',
+    customVoiceUrl: '',
+    globalVoiceId: '',
   }
   showCharacterDialog.value = true
 }
@@ -267,6 +322,10 @@ function openCreateVoiceDialog() {
     name: '',
     folderId: selectedFolderId.value,
     description: '',
+    qwenVoiceId: '',
+    voiceType: 'custom',
+    customVoiceUrl: '',
+    voicePrompt: '',
     gender: '',
     language: 'zh',
   }
@@ -361,7 +420,10 @@ async function removeVoice(voice: Voice) {
         <el-tab-pane label="角色" name="characters">
           <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
             <span class="tw-text-lg tw-font-semibold">角色列表</span>
-            <el-button type="primary" :icon="Plus" @click="openCreateCharacterDialog">新建角色</el-button>
+            <div class="tw-space-x-2">
+              <el-button type="success" :icon="Plus" @click="showAiDesignCharacterDialog = true; aiDesignCharacterPrompt = ''">AI 设计角色</el-button>
+              <el-button type="primary" :icon="Plus" @click="openCreateCharacterDialog">新建角色</el-button>
+            </div>
           </div>
           <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
             <el-card
@@ -403,7 +465,10 @@ async function removeVoice(voice: Voice) {
         <el-tab-pane label="场景" name="locations">
           <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
             <span class="tw-text-lg tw-font-semibold">场景列表</span>
-            <el-button type="primary" :icon="Plus" @click="openCreateLocationDialog">新建场景</el-button>
+            <div class="tw-space-x-2">
+              <el-button type="success" :icon="Plus" @click="showAiDesignLocationDialog = true; aiDesignLocationPrompt = ''">AI 设计场景</el-button>
+              <el-button type="primary" :icon="Plus" @click="openCreateLocationDialog">新建场景</el-button>
+            </div>
           </div>
           <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
             <el-card
@@ -414,7 +479,7 @@ async function removeVoice(voice: Voice) {
             >
               <div class="tw-flex tw-items-start tw-gap-3">
                 <el-avatar :size="48" class="tw-bg-green-500">
-                  <el-icon><Location /></el-icon>
+                  <el-icon><LocationIcon /></el-icon>
                 </el-avatar>
                 <div class="tw-flex-1 tw-min-w-0">
                   <h3 class="tw-font-semibold tw-truncate">{{ location.name }}</h3>
@@ -514,6 +579,9 @@ async function removeVoice(voice: Voice) {
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="全局声音ID">
+          <el-input v-model="characterForm.globalVoiceId" placeholder="如有全局声音ID可填入" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCharacterDialog = false">取消</el-button>
@@ -572,6 +640,21 @@ async function removeVoice(voice: Voice) {
             <el-option label="英文" value="en" />
           </el-select>
         </el-form-item>
+        <el-form-item label="音色类型">
+          <el-radio-group v-model="voiceForm.voiceType">
+            <el-radio label="custom" value="custom">自定义</el-radio>
+            <el-radio label="qwen" value="qwen">Qwen内置</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="自定义语音URL" v-if="voiceForm.voiceType === 'custom'">
+          <el-input v-model="voiceForm.customVoiceUrl" placeholder="输入音频URL" />
+        </el-form-item>
+        <el-form-item label="Qwen音色ID" v-if="voiceForm.voiceType === 'qwen'">
+          <el-input v-model="voiceForm.qwenVoiceId" placeholder="输入Qwen音色ID" />
+        </el-form-item>
+        <el-form-item label="配音Prompt" v-if="voiceForm.voiceType === 'custom'">
+          <el-input v-model="voiceForm.voicePrompt" placeholder="可输入参考文本" />
+        </el-form-item>
         <el-form-item label="归属文件夹">
           <el-select v-model="voiceForm.folderId" clearable placeholder="选择文件夹">
             <el-option
@@ -586,6 +669,32 @@ async function removeVoice(voice: Voice) {
       <template #footer>
         <el-button @click="showVoiceDialog = false">取消</el-button>
         <el-button type="primary" @click="saveVoice">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- AI设计角色对话框 -->
+    <el-dialog v-model="showAiDesignCharacterDialog" title="AI 设计角色" width="500px">
+      <el-form label-position="top">
+        <el-form-item label="设计提示词">
+          <el-input v-model="aiDesignCharacterPrompt" type="textarea" :rows="4" placeholder="例如：一个冷酷无情的刺客，穿着黑色长袍..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAiDesignCharacterDialog = false">取消</el-button>
+        <el-button type="primary" @click="doAiDesignCharacter" :loading="loading">生成</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- AI设计场景对话框 -->
+    <el-dialog v-model="showAiDesignLocationDialog" title="AI 设计场景" width="500px">
+      <el-form label-position="top">
+        <el-form-item label="设计提示词">
+          <el-input v-model="aiDesignLocationPrompt" type="textarea" :rows="4" placeholder="例如：一个赛博朋克风格的霓虹灯街道..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAiDesignLocationDialog = false">取消</el-button>
+        <el-button type="primary" @click="doAiDesignLocation" :loading="loading">生成</el-button>
       </template>
     </el-dialog>
   </div>

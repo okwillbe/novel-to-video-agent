@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.novel2video.agent.mapper.GlobalCharacterMapper">
+
+    <resultMap id="CharacterResultMap" type="io.novel2video.agent.entity.GlobalCharacter">
+        <id property="id" column="id"/>
+        <result property="characterId" column="character_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="folderId" column="folder_id"/>
+        <result property="name" column="name"/>
+        <result property="aliases" column="aliases" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="profileData" column="profile_data" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="profileConfirmed" column="profile_confirmed"/>
+        <result property="voiceId" column="voice_id"/>
+        <result property="voiceType" column="voice_type"/>
+        <result property="customVoiceUrl" column="custom_voice_url"/>
+        <result property="globalVoiceId" column="global_voice_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByCharacterId" resultMap="CharacterResultMap">
+        SELECT * FROM global_characters
+        WHERE character_id = #{characterId}
+    </select>
+
+    <select id="findByUserId" resultMap="CharacterResultMap">
+        SELECT * FROM global_characters
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByFolderId" resultMap="CharacterResultMap">
+        SELECT * FROM global_characters
+        WHERE folder_id = #{folderId}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="io.novel2video.agent.entity.GlobalCharacter">
+        INSERT INTO global_characters (
+            character_id, user_id, folder_id, name, aliases,
+            profile_data, profile_confirmed, voice_id, voice_type,
+            custom_voice_url, global_voice_id, created_at, updated_at
+        ) VALUES (
+            #{characterId}, #{userId}, #{folderId}, #{name}, #{aliases, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            #{profileData, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler}, #{profileConfirmed}, #{voiceId}, #{voiceType},
+            #{customVoiceUrl}, #{globalVoiceId}, NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="io.novel2video.agent.entity.GlobalCharacter">
+        UPDATE global_characters SET
+            name = #{name},
+            folder_id = #{folderId},
+            aliases = #{aliases, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            profile_data = #{profileData, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            profile_confirmed = #{profileConfirmed},
+            voice_id = #{voiceId},
+            voice_type = #{voiceType},
+            custom_voice_url = #{customVoiceUrl},
+            global_voice_id = #{globalVoiceId},
+            updated_at = NOW()
+        WHERE character_id = #{characterId}
+    </update>
+
+    <delete id="deleteByCharacterId">
+        DELETE FROM global_characters
+        WHERE character_id = #{characterId} AND user_id = #{userId}
+    </delete>
+
+    <update id="detachFromFolder">
+        UPDATE global_characters
+        SET folder_id = NULL, updated_at = NOW()
+        WHERE folder_id = #{folderId}
+    </update>
+
+</mapper>

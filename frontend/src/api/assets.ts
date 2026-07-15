@@ -212,3 +212,39 @@ export const updateVoice = (voiceId: string, data: Partial<{
 
 export const deleteVoice = (voiceId: string) =>
   api.delete<ApiResponse<void>>(`/assets/voices/${voiceId}`)
+
+// ==================== AI 设计 API ====================
+
+export const aiDesignCharacter = (data: { folderId?: string; name?: string; prompt: string }) =>
+  api.post<ApiResponse<Character>>('/assets/ai-design-character', data)
+
+export const aiDesignLocation = (data: { folderId?: string; name?: string; prompt: string }) =>
+  api.post<ApiResponse<Location>>('/assets/ai-design-location', data)
+
+export const aiModifyCharacter = (data: { characterId: string; prompt: string }) =>
+  api.post<ApiResponse<Character>>('/assets/ai-modify-character', data)
+
+// ==================== 辅助 API (Picker & Image Select) ====================
+
+export const selectImage = (data: { type: string; id: string; appearanceIndex?: number; imageIndex?: number }) =>
+  api.post<ApiResponse<void>>('/assets/select-image', data)
+
+export const undoImage = (data: { type: string; id: string; appearanceIndex?: number }) =>
+  api.post<ApiResponse<void>>('/assets/undo-image', data)
+
+export const getAssetPicker = (type?: string) =>
+  api.get<ApiResponse<any>>(`/assets/picker${type ? '?type=' + type : ''}`)
+
+export const uploadImage = (file: File, data: { type: string; id: string; appearanceIndex?: number; imageIndex?: number; labelText: string }) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('type', data.type)
+  formData.append('id', data.id)
+  if (data.appearanceIndex !== undefined) formData.append('appearanceIndex', String(data.appearanceIndex))
+  if (data.imageIndex !== undefined) formData.append('imageIndex', String(data.imageIndex))
+  formData.append('labelText', data.labelText)
+
+  return api.post<ApiResponse<any>>('/assets/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}

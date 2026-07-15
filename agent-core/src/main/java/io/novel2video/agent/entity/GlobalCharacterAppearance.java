@@ -50,9 +50,25 @@ public class GlobalCharacterAppearance {
     private String description;
 
     /**
+     * 历史描述词列表
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> descriptions;
+
+    /**
+     * 描述来源
+     */
+    private String descriptionSource;
+
+    /**
      * 单张图URL
      */
     private String imageUrl;
+
+    /**
+     * 当前图片媒体ID
+     */
+    private String imageMediaId;
 
     /**
      * 多图URL（JSON数组）
@@ -64,6 +80,28 @@ public class GlobalCharacterAppearance {
      * 当前选中的图片索引
      */
     private Integer selectedIndex;
+
+    /**
+     * 上一次的图片URL
+     */
+    private String previousImageUrl;
+
+    /**
+     * 上一次的图片媒体ID
+     */
+    private String previousImageMediaId;
+
+    /**
+     * 上一次候选列表
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> previousImageUrls;
+
+    /**
+     * 上一次描述列表
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> previousDescriptions;
 
     /**
      * 创建时间

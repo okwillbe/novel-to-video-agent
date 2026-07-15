@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="1-init-schema" author="system">
+        <sqlFile path="db/changelog/sql/init-schema.sql" splitStatements="true"/>
+    </changeSet>
+
+    <changeSet id="2-init-preset-skills" author="system">
+        <sqlFile path="db/changelog/sql/init-preset-skills.sql" splitStatements="true"/>
+    </changeSet>
+
+    <changeSet id="3-init-default-user" author="system">
+        <sqlFile path="db/changelog/sql/init-default-user.sql" splitStatements="true"/>
+    </changeSet>
+
+    <changeSet id="4-init-providers" author="system">
+        <sqlFile path="db/changelog/sql/init-providers.sql" splitStatements="true"/>
+    </changeSet>
+
+    <changeSet id="5-init-assets" author="system">
+        <sqlFile path="db/changelog/sql/init-assets.sql" splitStatements="true"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -13,6 +13,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.StreamEntryID;
 import redis.clients.jedis.params.XReadParams;
+import redis.clients.jedis.params.XReadGroupParams;
+import redis.clients.jedis.params.XPendingParams;
+import redis.clients.jedis.params.XClaimParams;
 import redis.clients.jedis.resps.StreamEntry;
 
 import java.time.Duration;
@@ -48,6 +51,15 @@ public class TaskQueueService {
 
     private static final String CONSUMER_NAME = "worker-" + UUID.randomUUID().toString().substring(0, 8);
 
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.xgroupCreate(streamKey, consumerGroup, StreamEntryID.LAST_ENTRY, true);
+        } catch (Exception e) {
+            // Group already exists or stream doesn't exist yet, ignore safely
+        }
+    }
+
     /**
      * Publish a task to the Redis Stream for worker pickup
      */
@@ -78,10 +90,10 @@ public class TaskQueueService {
     public List<StreamEntry> consumeTasks(int count) {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, StreamEntryID> streams = Map.of(streamKey, StreamEntryID.UNRECEIVED_ENTRY);
-            List<Map.Entry<String, List<StreamEntry>>> results = jedis.xreadgroup(
+            List<Map.Entry<String, List<StreamEntry>>> results = jedis.xreadGroup(
                     consumerGroup,
                     CONSUMER_NAME,
-                    XReadParams.xReadParams().count(count).block(pollTimeoutMs),
+                    XReadGroupParams.xReadGroupParams().count(count).block(pollTimeoutMs),
                     streams
             );
 
@@ -108,20 +120,17 @@ public class TaskQueueService {
     @Scheduled(fixedDelayString = "${task.queue.claim-interval-ms:60000}")
     public void claimStuckTasks() {
         try (Jedis jedis = jedisPool.getResource()) {
-            // Find pending entries that are older than the claim interval
-            var pendingInfo = jedis.xpending(streamKey, consumerGroup);
-            if (pendingInfo == null || pendingInfo.size() == 0) {
+            // Get pending entries details
+            var pendingEntries = jedis.xpending(streamKey, consumerGroup, new XPendingParams().start(StreamEntryID.MINIMUM_ID).end(StreamEntryID.MAXIMUM_ID).count(10));
+            if (pendingEntries == null || pendingEntries.isEmpty()) {
                 return;
             }
-
-            // Get pending entries details
-            var pendingEntries = jedis.xpending(streamKey, consumerGroup, null, null, 10);
             for (var entry : pendingEntries) {
                 // If a message has been idle for too long, claim it
                 if (entry.getIdleTime() > claimIntervalMs * 2) {
                     try {
                         jedis.xclaim(streamKey, consumerGroup, CONSUMER_NAME,
-                                claimIntervalMs, new StreamEntryID(entry.getID()));
+                                claimIntervalMs, new XClaimParams(), entry.getID());
                         log.warn("Claimed stuck task entry: {}", entry.getID());
                     } catch (Exception e) {
                         log.error("Failed to claim stuck task: {}", entry.getID(), e);

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getCurrentUser, type UserInfo } from '@/api'
+import { ElMessage } from 'element-plus'
+import { getCurrentUser, login, type UserInfo } from '@/api'
 
 const user = ref<UserInfo | null>(null)
 const showLogin = ref(false)
+const loginLoading = ref(false)
+const loginForm = ref({ email: 'admin', password: 'admin' })
 
 onMounted(async () => {
   await loadUser()
@@ -14,9 +17,30 @@ async function loadUser() {
     const res = await getCurrentUser()
     if (res.success) {
       user.value = res.data
+    } else {
+      showLogin.value = true
     }
   } catch (e) {
     console.error('Failed to load user', e)
+    showLogin.value = true
+  }
+}
+
+async function doLogin() {
+  loginLoading.value = true
+  try {
+    const res = await login(loginForm.value.email, loginForm.value.password)
+    if (res.success) {
+      showLogin.value = false
+      await loadUser()
+      ElMessage.success('登录成功')
+    } else {
+      ElMessage.error(res.message || '邮箱或密码错误')
+    }
+  } catch (e: any) {
+    ElMessage.error(e.message || '登录失败')
+  } finally {
+    loginLoading.value = false
   }
 }
 
@@ -99,6 +123,23 @@ function formatQuota(seconds: number | null, type: 'video' | 'voice'): string {
       </div>
     </div>
   </header>
+
+  <!-- 登录对话框 -->
+  <el-dialog v-model="showLogin" title="登录" width="380px" :close-on-click-modal="false" :show-close="!!user">
+    <el-form label-position="top" @submit.prevent="doLogin">
+      <el-form-item label="邮箱">
+        <el-input v-model="loginForm.email" placeholder="请输入邮箱" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button type="primary" :loading="loginLoading" style="width:100%" @click="doLogin">
+        登录
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -112,3 +153,4 @@ function formatQuota(seconds: number | null, type: 'video' | 'voice'): string {
   @apply tw-bg-primary-50 tw-text-primary-600;
 }
 </style>
+

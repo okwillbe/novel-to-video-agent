@@ -108,7 +108,7 @@ function goToGenerate() {
       <template #title>
         <span class="tw-font-semibold">单用户模式</span>
       </template>
-      当前为单用户版本，默认账号: admin@novel2video.local / admin123
+      当前为单用户版本，默认账号: admin / admin
     </el-alert>
   </div>
 </template>

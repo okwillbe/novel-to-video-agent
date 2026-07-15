@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.novel2video.agent.mapper.GlobalLocationMapper">
+
+    <resultMap id="LocationResultMap" type="io.novel2video.agent.entity.GlobalLocation">
+        <id property="id" column="id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="folderId" column="folder_id"/>
+        <result property="name" column="name"/>
+        <result property="summary" column="summary"/>
+        <result property="artStyle" column="art_style"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByLocationId" resultMap="LocationResultMap">
+        SELECT * FROM global_locations
+        WHERE location_id = #{locationId}
+    </select>
+
+    <select id="findByUserId" resultMap="LocationResultMap">
+        SELECT * FROM global_locations
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByFolderId" resultMap="LocationResultMap">
+        SELECT * FROM global_locations
+        WHERE folder_id = #{folderId}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="io.novel2video.agent.entity.GlobalLocation">
+        INSERT INTO global_locations (
+            location_id, user_id, folder_id, name, summary,
+            art_style, image_url, created_at, updated_at
+        ) VALUES (
+            #{locationId}, #{userId}, #{folderId}, #{name}, #{summary},
+            #{artStyle}, #{imageUrl}, NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="io.novel2video.agent.entity.GlobalLocation">
+        UPDATE global_locations SET
+            name = #{name},
+            folder_id = #{folderId},
+            summary = #{summary},
+            art_style = #{artStyle},
+            image_url = #{imageUrl},
+            updated_at = NOW()
+        WHERE location_id = #{locationId}
+    </update>
+
+    <delete id="deleteByLocationId">
+        DELETE FROM global_locations
+        WHERE location_id = #{locationId} AND user_id = #{userId}
+    </delete>
+
+    <update id="detachFromFolder">
+        UPDATE global_locations
+        SET folder_id = NULL, updated_at = NOW()
+        WHERE folder_id = #{folderId}
+    </update>
+
+</mapper>

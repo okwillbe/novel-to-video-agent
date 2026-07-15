@@ -58,6 +58,11 @@ public class GlobalVoice {
     private String customVoiceUrl;
 
     /**
+     * 上传的音频媒体ID
+     */
+    private String customVoiceMediaId;
+
+    /**
      * AI设计时的提示词
      */
     private String voicePrompt;
